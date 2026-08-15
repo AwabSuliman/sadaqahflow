@@ -2,8 +2,22 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Masjid Al-Wasatiyah Wal-Itidaal Zakatul Fitr Distribution",
-  description: "Zakatul Fitr distribution operations for Masjid Al-Wasatiyah Wal-Itidaal.",
+  title: "Zakat Distribution | Community Logistics Platform",
+  description:
+    "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
+  openGraph: {
+    title: "Zakat Distribution | Community Logistics Platform",
+    description:
+      "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
+    siteName: "Zakat Distribution",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Zakat Distribution | Community Logistics Platform",
+    description:
+      "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
+  },
 };
 
 export default function RootLayout({
