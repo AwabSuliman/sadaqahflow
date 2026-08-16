@@ -22,18 +22,34 @@ test("sign-in input normalizes valid email addresses", () => {
 
 test("sign-up input validates name, password, and role", () => {
   const valid = parseSignUpInput(
-    makeFormData({ email: "driver@example.org", name: "Amina Yusuf", password: "password123", role: "driver" }),
+    makeFormData({ email: "driver@example.org", firstName: "Amina", lastName: "Yusuf", password: "password123", role: "driver" }),
   );
   const shortPassword = parseSignUpInput(
-    makeFormData({ email: "driver@example.org", name: "Amina Yusuf", password: "short", role: "driver" }),
+    makeFormData({ email: "driver@example.org", firstName: "Amina", lastName: "Yusuf", password: "short", role: "driver" }),
   );
   const forgedRole = parseSignUpInput(
-    makeFormData({ email: "driver@example.org", name: "Amina Yusuf", password: "password123", role: "admin" }),
+    makeFormData({ email: "driver@example.org", firstName: "Amina", lastName: "Yusuf", password: "password123", role: "admin" }),
   );
 
-  assert.equal(valid.ok && valid.data.role, "driver");
+  assert.deepEqual(valid.ok && { firstName: valid.data.firstName, lastName: valid.data.lastName, name: valid.data.name }, {
+    firstName: "Amina",
+    lastName: "Yusuf",
+    name: "Amina Yusuf",
+  });
   assert.equal(!shortPassword.ok && shortPassword.error, "Use at least 8 characters for your password.");
   assert.equal(!forgedRole.ok && forgedRole.error, "Choose recipient or driver.");
+});
+
+test("sign-up requires separate first and last names", () => {
+  const missingFirstName = parseSignUpInput(
+    makeFormData({ email: "user@example.org", firstName: "", lastName: "Yusuf", password: "password123", role: "recipient" }),
+  );
+  const missingLastName = parseSignUpInput(
+    makeFormData({ email: "user@example.org", firstName: "Amina", lastName: "", password: "password123", role: "recipient" }),
+  );
+
+  assert.deepEqual(missingFirstName, { error: "Enter your first name.", ok: false });
+  assert.deepEqual(missingLastName, { error: "Enter your last name.", ok: false });
 });
 
 test("auth service errors are converted to user-friendly messages", () => {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { profileFromClaims, roleCanAccess, safeRedirectPath } from "../src/lib/auth-core.ts";
+import { accountIntentMismatch, profileFromClaims, roleCanAccess, safeRedirectPath } from "../src/lib/auth-core.ts";
 
 test("safeRedirectPath accepts only local absolute paths", () => {
   assert.equal(safeRedirectPath("/dashboard"), "/dashboard");
@@ -59,4 +59,12 @@ test("recipient actions reject drivers while retaining the admin override", () =
   assert.equal(roleCanAccess("recipient", ["recipient"]), true);
   assert.equal(roleCanAccess("driver", ["recipient"]), false);
   assert.equal(roleCanAccess("admin", ["recipient"]), true);
+});
+
+test("dedicated sign-in pages reject accounts with the opposite role", () => {
+  assert.equal(accountIntentMismatch("recipient", "recipient"), null);
+  assert.equal(accountIntentMismatch("driver", "driver"), null);
+  assert.match(accountIntentMismatch("recipient", "driver") ?? "", /not as a driver/);
+  assert.match(accountIntentMismatch("driver", "recipient") ?? "", /not for delivery requests/);
+  assert.equal(accountIntentMismatch("admin", "driver"), "This account is registered as an administrator.");
 });

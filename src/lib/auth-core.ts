@@ -1,5 +1,7 @@
 import type { Role } from "./types";
 
+export type AccountIntent = "driver" | "recipient";
+
 export type AuthProfile = {
   email: string;
   name: string;
@@ -16,6 +18,20 @@ export type AuthClaims = {
 
 export function roleCanAccess(actualRole: Role, allowedRoles: Role[]) {
   return actualRole === "admin" || allowedRoles.includes(actualRole);
+}
+
+export function accountIntentMismatch(actualRole: Role, expectedRole: AccountIntent) {
+  if (actualRole === expectedRole) return null;
+
+  if (actualRole === "recipient") {
+    return "This account is registered for delivery requests, not as a driver.";
+  }
+
+  if (actualRole === "driver") {
+    return "This account is registered as a driver, not for delivery requests.";
+  }
+
+  return "This account is registered as an administrator.";
 }
 
 export function safeRedirectPath(path: FormDataEntryValue | null | string | undefined) {

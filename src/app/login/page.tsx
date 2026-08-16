@@ -13,15 +13,16 @@ export default async function LoginPage({
   const params = await searchParams;
   const nextPath = safeRedirectPath(params?.next);
   const initialMode = params?.mode === "driver" ? "driver-signup" : params?.mode === "signup" ? "signup" : "signin";
+  const intent = params?.mode === "driver" ? "driver" : params?.mode === "signup" ? "recipient" : "signin";
   const pageCopy =
     initialMode === "driver-signup"
       ? {
-          description: "Create an account to apply as a volunteer driver.",
+          description: "Apply to drive or sign in to an existing driver account.",
           title: "Become a driver",
         }
       : initialMode === "signup"
         ? {
-            description: "Create an account to request food for your household.",
+            description: "Create an account or sign in to manage your delivery request.",
             title: "Request a delivery",
           }
         : {
@@ -68,7 +69,7 @@ export default async function LoginPage({
               </Link>
             )}
           </section>
-          <AuthForm initialMode={initialMode} nextPath={nextPath} />
+          <AuthForm initialMode={initialMode} intent={intent} nextPath={nextPath} />
         </div>
       </div>
     </main>

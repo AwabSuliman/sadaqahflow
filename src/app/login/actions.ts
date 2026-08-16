@@ -9,6 +9,7 @@ import {
   parseSignInInput,
   parseSignUpInput,
 } from "@/lib/auth-input";
+import { accountIntentMismatch, profileFromClaims, type AccountIntent } from "@/lib/auth-core";
 
 export type AuthFormState = {
   error?: string;
@@ -37,10 +38,27 @@ export async function signIn(_state: AuthFormState, formData: FormData): Promise
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword(input.data);
+  const { data, error } = await supabase.auth.signInWithPassword(input.data);
 
   if (error) {
     return { error: authErrorMessage(error.message, "signin") };
+  }
+
+  const expectedRole = formData.get("expectedRole");
+
+  if ((expectedRole === "driver" || expectedRole === "recipient") && data.user) {
+    const profile = profileFromClaims({
+      app_metadata: data.user.app_metadata,
+      email: data.user.email,
+      sub: data.user.id,
+      user_metadata: data.user.user_metadata,
+    });
+    const mismatch = accountIntentMismatch(profile.role, expectedRole satisfies AccountIntent);
+
+    if (mismatch) {
+      await supabase.auth.signOut();
+      return { error: mismatch };
+    }
   }
 
   redirect(safeRedirectPath(formData.get("next")));
@@ -68,6 +86,8 @@ export async function signUp(_state: AuthFormState, formData: FormData): Promise
     email: input.data.email,
     options: {
       data: {
+        first_name: input.data.firstName,
+        last_name: input.data.lastName,
         name: input.data.name,
         role: input.data.role,
       },

@@ -5,8 +5,17 @@ import { requestPasswordReset, signIn, signUp, type AuthFormState } from "./acti
 
 const initialState: AuthFormState = {};
 type AuthMode = "driver-signup" | "forgot" | "signin" | "signup";
+type AuthIntent = "driver" | "recipient" | "signin";
 
-export function AuthForm({ initialMode = "signin", nextPath }: { initialMode?: AuthMode; nextPath: string }) {
+export function AuthForm({
+  initialMode = "signin",
+  intent = "signin",
+  nextPath,
+}: {
+  initialMode?: AuthMode;
+  intent?: AuthIntent;
+  nextPath: string;
+}) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [signInState, signInAction, signInPending] = useActionState(signIn, initialState);
   const [signUpState, signUpAction, signUpPending] = useActionState(signUp, initialState);
@@ -15,28 +24,34 @@ export function AuthForm({ initialMode = "signin", nextPath }: { initialMode?: A
   const state = mode === "signin" ? signInState : isSignUp ? signUpState : resetState;
   const pending = mode === "signin" ? signInPending : isSignUp ? signUpPending : resetPending;
   const formAction = mode === "signin" ? signInAction : isSignUp ? signUpAction : resetAction;
+  const allowsSignup = intent !== "signin";
+  const signupMode = intent === "driver" ? "driver-signup" : "signup";
+  const signInLabel = intent === "driver" ? "Driver sign in" : intent === "recipient" ? "Recipient sign in" : "Sign in";
 
   return (
     <div className="mx-auto grid w-full max-w-md gap-5">
-      <div className="grid grid-cols-2 rounded-lg border border-[#d7ded7] bg-white p-1 shadow-sm">
+      <div className={`grid rounded-lg border border-[#d7ded7] bg-white p-1 shadow-sm ${allowsSignup ? "grid-cols-2" : "grid-cols-1"}`}>
         <button
           className={`rounded-md px-4 py-3 text-sm font-bold ${mode === "signin" ? "bg-[#1f5d54] text-white" : "text-[#293532]"}`}
           onClick={() => setMode("signin")}
           type="button"
         >
-          Sign in
+          {signInLabel}
         </button>
-        <button
-          className={`rounded-md px-4 py-3 text-sm font-bold ${isSignUp ? "bg-[#1f5d54] text-white" : "text-[#293532]"}`}
-          onClick={() => setMode("signup")}
-          type="button"
-        >
-          Create account
-        </button>
+        {allowsSignup && (
+          <button
+            className={`rounded-md px-4 py-3 text-sm font-bold ${isSignUp ? "bg-[#1f5d54] text-white" : "text-[#293532]"}`}
+            onClick={() => setMode(signupMode)}
+            type="button"
+          >
+            {intent === "driver" ? "Apply to drive" : "Create account"}
+          </button>
+        )}
       </div>
 
       <form action={formAction} className="grid gap-4 rounded-lg border border-[#d8ded7] bg-white p-5 shadow-sm">
         <input name="next" type="hidden" value={nextPath} />
+        {mode === "signin" && intent !== "signin" && <input name="expectedRole" type="hidden" value={intent} />}
 
         {mode === "forgot" && <h2 className="text-lg font-bold text-[#17201f]">Reset password</h2>}
 
@@ -50,17 +65,30 @@ export function AuthForm({ initialMode = "signin", nextPath }: { initialMode?: A
         )}
 
         {isSignUp && (
-          <label className="grid gap-1.5 text-sm font-semibold text-[#26312f]">
-            Full name
-            <input
-              autoComplete="name"
-              className="rounded-md border border-[#c9d3ce] bg-white px-3 py-2 text-base font-normal outline-none transition focus:border-[#1f5d54] focus:ring-2 focus:ring-[#1f5d54]/15"
-              maxLength={100}
-              name="name"
-              required
-              type="text"
-            />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm font-semibold text-[#26312f]">
+              First name
+              <input
+                autoComplete="given-name"
+                className="rounded-md border border-[#c9d3ce] bg-white px-3 py-2 text-base font-normal outline-none transition focus:border-[#1f5d54] focus:ring-2 focus:ring-[#1f5d54]/15"
+                maxLength={50}
+                name="firstName"
+                required
+                type="text"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-[#26312f]">
+              Last name
+              <input
+                autoComplete="family-name"
+                className="rounded-md border border-[#c9d3ce] bg-white px-3 py-2 text-base font-normal outline-none transition focus:border-[#1f5d54] focus:ring-2 focus:ring-[#1f5d54]/15"
+                maxLength={50}
+                name="lastName"
+                required
+                type="text"
+              />
+            </label>
+          </div>
         )}
 
         <label className="grid gap-1.5 text-sm font-semibold text-[#26312f]">
@@ -140,24 +168,6 @@ export function AuthForm({ initialMode = "signin", nextPath }: { initialMode?: A
           </button>
         )}
 
-        {mode === "signup" && (
-          <div className="border-t border-[#e3e8e4] pt-4 text-center">
-            <p className="text-sm text-[#5d6966]">Volunteering to deliver food boxes?</p>
-            <button
-              className="mt-1 text-sm font-bold text-[#1f5d54]"
-              onClick={() => setMode("driver-signup")}
-              type="button"
-            >
-              Apply as a driver
-            </button>
-          </div>
-        )}
-
-        {mode === "driver-signup" && (
-          <button className="text-sm font-bold text-[#1f5d54]" onClick={() => setMode("signup")} type="button">
-            Back to recipient account
-          </button>
-        )}
       </form>
     </div>
   );

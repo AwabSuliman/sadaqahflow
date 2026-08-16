@@ -4,6 +4,8 @@ export type SignInInput = {
 };
 
 export type SignUpInput = SignInInput & {
+  firstName: string;
+  lastName: string;
   name: string;
   role: "driver" | "recipient";
 };
@@ -41,11 +43,15 @@ export function parseSignInInput(formData: FormData): AuthInputResult<SignInInpu
 
 export function parseSignUpInput(formData: FormData): AuthInputResult<SignUpInput> {
   const signInInput = parseSignInInput(formData);
-  const name = readText(formData, "name");
+  const firstName = readText(formData, "firstName");
+  const lastName = readText(formData, "lastName");
+  const name = `${firstName} ${lastName}`;
   const role = formData.get("role");
 
   if (!signInInput.ok) return signInInput;
-  if (name.length < 2 || name.length > 100) return { error: "Enter your full name.", ok: false };
+  if (!firstName || firstName.length > 50) return { error: "Enter your first name.", ok: false };
+  if (!lastName || lastName.length > 50) return { error: "Enter your last name.", ok: false };
+  if (name.length > 100) return { error: "First and last name must total 100 characters or fewer.", ok: false };
   if (signInInput.data.password.length < 8) {
     return { error: "Use at least 8 characters for your password.", ok: false };
   }
@@ -53,7 +59,7 @@ export function parseSignUpInput(formData: FormData): AuthInputResult<SignUpInpu
     return { error: "Choose recipient or driver.", ok: false };
   }
 
-  return { data: { ...signInInput.data, name, role }, ok: true };
+  return { data: { ...signInInput.data, firstName, lastName, name, role }, ok: true };
 }
 
 export function parsePasswordResetRequest(formData: FormData): AuthInputResult<{ email: string }> {
