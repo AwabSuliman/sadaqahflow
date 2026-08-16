@@ -4,9 +4,10 @@ import { useActionState, useState } from "react";
 import { requestPasswordReset, signIn, signUp, type AuthFormState } from "./actions";
 
 const initialState: AuthFormState = {};
+type AuthMode = "driver-signup" | "forgot" | "signin" | "signup";
 
-export function AuthForm({ nextPath }: { nextPath: string }) {
-  const [mode, setMode] = useState<"driver-signup" | "forgot" | "signin" | "signup">("signin");
+export function AuthForm({ initialMode = "signin", nextPath }: { initialMode?: AuthMode; nextPath: string }) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [signInState, signInAction, signInPending] = useActionState(signIn, initialState);
   const [signUpState, signUpAction, signUpPending] = useActionState(signUp, initialState);
   const [resetState, resetAction, resetPending] = useActionState(requestPasswordReset, initialState);

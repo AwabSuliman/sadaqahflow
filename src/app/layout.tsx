@@ -2,21 +2,19 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zakat Distribution | Community Logistics Platform",
-  description:
-    "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: "Masjid Al Wasatiyyah Wal Itidaal",
+  description: "Request a food delivery or apply to become a volunteer driver.",
   openGraph: {
-    title: "Zakat Distribution | Community Logistics Platform",
-    description:
-      "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
-    siteName: "Zakat Distribution",
+    title: "Masjid Al Wasatiyyah Wal Itidaal",
+    description: "Request a food delivery or apply to become a volunteer driver.",
+    siteName: "Masjid Al Wasatiyyah Wal Itidaal",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Zakat Distribution | Community Logistics Platform",
-    description:
-      "A secure operations platform for coordinating community food requests, volunteer drivers, and last-mile delivery.",
+    title: "Masjid Al Wasatiyyah Wal Itidaal",
+    description: "Request a food delivery or apply to become a volunteer driver.",
   },
 };
 
@@ -26,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
