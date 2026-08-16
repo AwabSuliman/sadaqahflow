@@ -77,7 +77,7 @@ export default async function Home() {
   return (
     <main className="flex min-h-screen flex-col bg-[#fcfbf8] text-[#1d2824]">
       <header className="border-b border-[#e5e5de]">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8 sm:py-6">
+        <div className="flex w-full items-center justify-between gap-4 px-5 py-5 sm:px-8 sm:py-6 lg:px-12">
           <Link className="min-w-0" href="/" aria-label="Masjid Al Wasatiyyah Wal Itidaal home">
             <span className="block truncate text-sm font-bold tracking-[-0.01em] text-[#1d2924] sm:text-base">
               Masjid Al Wasatiyyah Wal Itidaal
