@@ -1,167 +1,30 @@
-# Food Distribution App
+# SadaqahFlow
 
-A Next.js MVP for coordinating Zakatul Fitr food box distribution across recipients, mosque admins, and volunteer drivers.
+Food-delivery coordination for Masjid Al Wasatiyyah Wal Itidaal.
 
-## What It Does
+[View live site](https://wasatiyyah-delivery.vercel.app/) · Built with Next.js, TypeScript, PostgreSQL, and Supabase
 
-- Recipients can submit a food box request with household size, contact details, and delivery instructions.
-- Recipients can correct their own request details until the request is approved.
-- Recipients and admins can see an audit history from submission through delivery.
-- Admins can review, approve, deny, search, and filter requests.
-- Request and driver denials require a reason that is shown in activity history and user notifications.
-- Admins can move requests into review, approve them, or assign deliveries in batches.
-- Admins can open or close recipient request intake without ending the active season.
-- Admins can review the full volunteer roster and approve or deny driver applications.
-- Admins can select and approve multiple pending driver applications together.
-- Admins can assign and unassign deliveries directly from request details.
-- Drivers can apply to volunteer, claim available deliveries under their approved account, update delivery status, and record why a delivery was missed.
-- Drivers can review their active-season delivery totals and completed attempts.
-- The dashboard tracks requests by operational state, family size, approved drivers, denied drivers, and pending driver applications.
-- Admin reports summarize families, household members, approved food weight, delivered food weight, and totals by status.
-- Drivers can download a route manifest for their currently assigned deliveries.
-- Admins can browse archived requests by distribution season, inspect their details, and export a season as CSV.
-- Supabase authentication protects the dashboard when Supabase environment variables are configured.
-- Signed-in dashboards refresh automatically when another user changes requests, deliveries, driver applications, or seasons.
-- In-app notifications alert recipients, drivers, and admins about request decisions, available or assigned deliveries, failed attempts, and driver applications.
-- Transactional emails notify recipients and drivers about important request, delivery, and application milestones.
-- Users can request a secure password reset link and choose a new password through the Supabase recovery flow.
+## The problem
 
-## Tech Stack
+Coordinating a delivery takes more than collecting a form. Requests need to be reviewed, drivers need to be approved, assignments can change, and everyone needs to know what happened without relying on scattered messages or spreadsheets.
 
-- Next.js 16 App Router
-- React 19
-- Tailwind CSS 4
-- Supabase Auth with `@supabase/ssr`
-- Supabase PostgreSQL with row-level security in configured environments
-- File-backed JSON persistence for local demo mode
-- Server Actions for form submissions and mutations
+SadaqahFlow keeps that process in one system. Recipients submit and track requests, volunteer drivers manage deliveries, and staff oversee the operation from an administrative dashboard.
 
-## Getting Started
+## How it works
 
-Install dependencies:
+1. A recipient creates an account and submits a household request.
+2. Staff review the request and approve or deny it.
+3. An approved driver claims an available delivery or receives an assignment.
+4. The driver records the outcome, and the request history is updated for the recipient and staff.
 
-```bash
-npm install
-```
+Driver applications follow their own approval flow, so registering as a driver does not grant access to delivery information.
 
-Create `.env.local` from the example file and add your Supabase project values:
+## Stack
 
-```bash
-cp .env.example .env.local
-```
-
-Required variables:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
-
-Apply every migration in `supabase/migrations` to the Supabase project. With the Supabase CLI linked to the project, run:
-
-```bash
-supabase db push
-```
-
-The migration files can be applied in timestamp order through the Supabase SQL Editor when the CLI is unavailable. They create the active season, request and driver tables, audit events, row-level security policies, atomic delivery workflow functions, and database access hardening.
-
-In Supabase Auth URL Configuration, set the Site URL and add this redirect URL:
-
-```text
-http://localhost:3000/auth/callback
-```
-
-Use the production domain in the production project.
-
-## Admin Access
-
-Project-level Supabase permissions do not automatically grant admin access inside the application. After creating the staff Auth account, assign its trusted application role from the SQL Editor:
-
-```sql
-update auth.users
-set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
-where email = 'admin@example.com';
-```
-
-Replace the example email, then sign out and back in so Supabase issues a token containing the new claim. Never place the admin role in public signup metadata.
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-## Useful Commands
-
-```bash
-npm run lint
-npm run build
-npm test
-```
-
-## Demo Notes
-
-Without Supabase environment variables, the app stores demo state in `data/zakatul-fitr-state.json`. If that file is missing, the app recreates it from the seeded data in `src/lib/store.ts`.
-
-When Supabase environment variables are present, `/` and `/dashboard` require sign-in and `/login` handles sign-in, sign-up, and sign-out. New users can sign up as recipients or prospective drivers. The database copies that signup choice into trusted `app_metadata` and enforces recipient and driver write permissions with row-level security. Drivers cannot view or claim deliveries until an admin approves their database application. Admin access is trusted only from Supabase `app_metadata.role = "admin"`.
-
-Driver applications use the signed-in account's name, email, and user ID. Applicants provide only their current phone number, preventing an application from being attached to a different identity.
-
-Supabase email confirmation links return through `/auth/callback`, which exchanges the auth code for a session and redirects back to the original protected page. In Supabase Auth settings, add your `NEXT_PUBLIC_SITE_URL` value to the allowed redirect URLs.
-
-The database policies scope recipients to their own requests, approved drivers to available or assigned deliveries, and admins to operational data. Delivery claims and state transitions execute atomically in PostgreSQL to prevent two drivers from claiming the same request.
-
-Recipients can update only their own submitted or under-review request. The protected database function locks edits after approval and recalculates box weight from household size; admins retain control of manual box-weight adjustments.
-
-Database triggers record request submission, detail edits, review, approval, and denial. Those entries appear alongside driver assignment and delivery updates in the request activity history.
-
-Admins must provide a short explanation when denying a food request or driver application. PostgreSQL enforces the requirement even for direct API updates, and the reason appears in the affected user’s dashboard, activity history, CSV exports, and in-app or email notification.
-
-Admins can close request intake while keeping the current distribution season active, then reopen it later. The database checks the intake setting again when a recipient submits, so a stale browser cannot bypass the closure.
-
-The admin request table supports bulk review, approval, and driver assignment for up to 200 requests. Each bulk database function validates every selected request and rolls back the entire operation if any item has already changed.
-
-Pending driver applications can also be approved in batches of up to 200. Supabase locks and validates every selected application before committing the approvals.
-
-Supabase Realtime keeps open dashboards current across users. Realtime change delivery still follows the table row-level security policies, so each account receives only changes it is allowed to read.
-
-Marking a delivery as not delivered requires a reason. Supabase stores that reason with the delivery event so recipients and admins can see it in the request activity history.
-
-PostgreSQL triggers create private in-app notifications for important workflow changes. Each account can read and dismiss only its own alerts, and Realtime refreshes the unread count while the dashboard is open.
-
-Important recipient and driver alerts are also copied into a private email outbox. The `send-notification-emails` Supabase Edge Function sends queued messages through Resend, retries temporary failures with backoff, and uses provider idempotency keys to avoid duplicate email during a retry. Broadcast alerts about generally available deliveries remain in-app only to avoid emailing every approved driver.
-
-## Transactional Email Setup
-
-Create a Resend account, verify the sending domain, and create an API key. Then set these Edge Function secrets in Supabase:
-
-```bash
-supabase secrets set RESEND_API_KEY=re_...
-supabase secrets set EMAIL_FROM="Masjid Al-Wasatiyah Wal-Itidaal <notifications@example.org>"
-supabase secrets set APP_URL=https://your-production-domain.example
-```
-
-Deploy the worker with secret-key authentication:
-
-```bash
-supabase functions deploy send-notification-emails --no-verify-jwt
-```
-
-Copy `supabase/email-worker-cron.sql.example`, replace its project URL and Supabase secret API key placeholders, and run it once in the Supabase SQL Editor. The scheduled job invokes the worker every minute. Project credentials are stored in Supabase Vault rather than committed to the repository.
-
-The admin dashboard reports queued, sent, and permanently failed email counts. A message becomes permanently failed after five attempts; inspect the Edge Function logs and Resend dashboard when that count is nonzero.
-
-Activating a new distribution season archives the current season. The admin form requires explicit confirmation before making that change.
-
-## Deployment Checklist
-
-- Apply every migration in `supabase/migrations` before deploying the matching application build.
-- Add all three environment variables to the hosting project.
-- Add the production `/auth/callback` URL to Supabase Auth redirects.
-- Configure Resend, deploy `send-notification-emails`, and schedule it with the Vault-backed cron setup.
-- Create staff accounts manually and set their trusted `app_metadata.role` to `admin`.
-- Verify recipient, pending-driver, approved-driver, and admin accounts separately.
-- Run `npm test`, `npm run lint`, and `npm run build`.
+| Area | Technology |
+| --- | --- |
+| Application | Next.js 16, React 19, TypeScript |
+| Database and authentication | Supabase, PostgreSQL |
+| Interface | Tailwind CSS |
+| Hosting | Vercel |
+| Testing | Node.js test runner, ESLint |
